@@ -2,9 +2,12 @@ from dataclasses import replace
 from turtle import up
 
 def parse_equation(equation):
+        #Quita las "" que traiga
+        for x in range(len(equation)):
+            equation = equation.replace('"',"")
+
         equationSplit = equation.split()
-        #print(equationSplit)
-        vector = []
+        vector = {}
         flag = 1
         for x in range(len(equationSplit)):
             flag2 = equationSplit[x].split("x")
@@ -13,18 +16,18 @@ def parse_equation(equation):
                 if(var == ''):
                     var = "1"
                 if(var.find(".")!=-1):
-                    vector.append("'x"+str(flag)+"'"+" : "+var)
+                    vector["x"+str(flag)] = var
                     flag = flag+1
                 else:
-                    vector.append("'x"+str(flag)+"'"+" : "+var+".0")
+                    vector["x"+str(flag)] = var+".0"
                     flag = flag+1
-        print(vector)
+
+        #print(vector)
         return vector
 
 def parse_restriction(restriction):
         upperBoundFlag = bool(0)
         find = ''
-        dict = {}
         restrictionSplit = restriction.split()
 
         for value in restrictionSplit:
@@ -35,36 +38,144 @@ def parse_restriction(restriction):
                 upperBoundFlag = bool(0)
                 find = restriction.find(value)
 
-        separateEquation = restriction[0:find]
+        separateEquation = restriction[1:find]
         restrictionValue = restriction[find+3:len(restriction)]
+        f = float(restrictionValue)
 
-        dict[0] = parse_equation(separateEquation) 
-        dict[1] = float(restrictionValue)
-        dict[2] = upperBoundFlag
+        #print(parse_equation(separateEquation), float(restrictionValue), upperBoundFlag)
+        return parse_equation(separateEquation), f, upperBoundFlag
 
-        print (dict)
+def parse_problem(objective, restrictions, maximize):
+        Mvar = 100000.0
+        contTrue = 0
+        contFalse = 0
+        matrix = []
+        filaZ = []
+        filaVar = []
+        filaMat = []
+        parseRestrictions = {}
+        contX = objective.count('x')
+        contRestriction = restrictions.count(',')
 
-        return dict
+        #Eliminar caracteres de las restricciones
+        for xDelete in range(len(restrictions)):
+            restrictions = restrictions.replace('[',"")
+            restrictions = restrictions.replace(']',"")
+            restrictions = restrictions.replace('"',"")
+
+        #Se envia a evaluar la funcion objetivo
+        parseEquation = parse_equation(objective)
+
+        #Se envian a evaluar las restricciones
+        restrictionsSplit = restrictions.split(",")
+        for xEvaluate in range(len(restrictionsSplit)):
+            parseRestrictions[xEvaluate] = parse_restriction(restrictionsSplit[xEvaluate])
+
+        #Agregar variables de slack
+        for xEvaluate in range(len(parseRestrictions)):
+            if  parseRestrictions[xEvaluate][2] == True:
+                #Holgura
+                contTrue = len(parseRestrictions)
+            elif parseRestrictions[xEvaluate][2] == False:
+                #Superavit
+                contFalse+=1
+
+        if contTrue > 0 and contFalse == 0:
+            cantVar = contX + len(parseRestrictions)
+        else:
+            cantVar = contX + len(parseRestrictions) + contFalse
+       
+        #Matriz
+        #Fila z
+        contS = 0
+        contA = 0
+        for key in parseEquation:
+            filaZ.append(parseEquation[key])
+            #agrega las variables
+            filaVar.append(key)
+        for x in range(contRestriction+1):
+            filaVar.append('s' + str(x+1))
+            contS+=1
+        for y in range(contFalse):
+            filaVar.append('a' + str(y+1))
+            contA+=1
+
+        if contTrue > 0 and contFalse == 0:
+            for x in range(contTrue):
+                filaZ.append(0)  
+        elif contTrue > 0 and contFalse > 0:
+            for x in range(contTrue):
+                filaZ.append(0) 
+            for y in range(contFalse):
+                if maximize == "False" or maximize == "false":
+                    filaZ.append(Mvar) 
+                elif maximize == "True" or maximize == "true":
+                    filaZ.append(-Mvar)
+
+        #Matriz de valores
+        #cont = len(objective)
+        #for filas in parseRestrictions:
+            #for key, value in parseRestrictions.items():
+                #filaMat.append[value]
+            #for slack in range(len(objective), len(filaVar)):
+                #if slack == cont:
+                    #if contTrue:
+                        #filaMat.append[1.0]
+                    #else:
+                        #filaMat.append[-1.0]
+                        #filaMat.append[1.0]
+                        #slack += 1
+                    #break
+        #cont += 1
+              
+        matrix.append(filaZ)
+        matrix.append(filaMat)
+        matrix.append(filaVar)
+
+        print(matrix)
+        return matrix
+
 
 class main:
+
     #Ejercicio 1
-    print("Ingrese la ecuacion:")
-    equation = input()
+    #print("Ingrese la ecuacion:")
+    #equation = input()
 
     #Llamado a la funcion
-    parse_equation(equation)
+    #parse_equation(equation)
     
     #Ejercicio 2
-    print("Ingrese la restriccion:")
-    restriction = input()
+    #print("Ingrese la restriccion:")
+    #restriction = input()
 
     #Llamado a la funcion
-    parse_restriction(restriction)
+    #parse_restriction(restriction)
 
     #Ejercicio 3
-    #def parse_problem(objective, restrictions, maximize):
+    print("Ingrese el objetivo:")
+    objective = input()
+    print("Ingrese la lista de restricciones:")
+    restrictions = input()
+    print("Se desea maximizar la funcion:")
+    maximize = input()
 
-    #def metodo_simplex(self)
+    #Llamado a la funcion
+    parse_problem(objective, restrictions, maximize)
 
-    #def metodo_simplex_solver(self)
+    #Ejercicio 4
+    #Llamado a la funcion
+    #def metodo_simplex(objective, restrictions, variables, maximize)
+
+    #Ejercicio 5
+    #print("Ingrese el objetivo:")
+    #objective = input()
+    #print("Ingrese la lista de restricciones:")
+    #restrictions = input()
+    #print("Se desea maximizar la funcion:")
+    #maximize = input()
+
+    #Llamado a la funcion
+    #def metodo_simplex_solver(objective, restrictions, maximize)
+
 
