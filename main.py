@@ -66,6 +66,8 @@ def parse_problem(objective, restrictions, maximize):
         filaVar = []
         parseRestrictions = []
         contX = objective.count('x')
+        
+        restrictions = str(restrictions)
         contRestriction = restrictions.count(',')
 
         #Eliminar caracteres de las restricciones
@@ -91,11 +93,6 @@ def parse_problem(objective, restrictions, maximize):
             elif parseRestrictions[xEvaluate][2] == False:
                 #Superavit
                 contFalse+=1
-
-        if contTrue > 0 and contFalse == 0:
-            cantVar = contX + len(parseRestrictions)
-        else:
-            cantVar = contX + len(parseRestrictions) + contFalse
        
         #Matriz
         #Fila z
@@ -148,7 +145,12 @@ def parse_problem(objective, restrictions, maximize):
         #print(matrix)
         return matrix
 
-
+def simplex_solver(objective, restrictions, maximize):
+    matrix = []
+    matrix = parse_problem(objective, restrictions, maximize)
+    
+    print(matrix)
+        
 class main:
 
     #Ejercicio 1
