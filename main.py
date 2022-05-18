@@ -1,5 +1,6 @@
 from dataclasses import replace
 from turtle import up
+import numpy as np
 
 def parse_equation(equation):
         #Quita las "" que traiga
@@ -45,6 +46,17 @@ def parse_restriction(restriction):
         #print(parse_equation(separateEquation), float(restrictionValue), upperBoundFlag)
         return parse_equation(separateEquation), f, upperBoundFlag
 
+def splitIndex(value):
+    index = value.split('x')
+    coeficient = 1
+    subindex = index[1]
+
+    if index[0] != '':
+        coeficient = index[0]
+        if index[0] == '-':
+            coeficient = -1
+    return float(coeficient), int(subindex)
+
 def parse_problem(objective, restrictions, maximize):
         Mvar = 100000.0
         contTrue = 0
@@ -52,8 +64,7 @@ def parse_problem(objective, restrictions, maximize):
         matrix = []
         filaZ = []
         filaVar = []
-        filaMat = []
-        parseRestrictions = {}
+        parseRestrictions = []
         contX = objective.count('x')
         contRestriction = restrictions.count(',')
 
@@ -69,7 +80,8 @@ def parse_problem(objective, restrictions, maximize):
         #Se envian a evaluar las restricciones
         restrictionsSplit = restrictions.split(",")
         for xEvaluate in range(len(restrictionsSplit)):
-            parseRestrictions[xEvaluate] = parse_restriction(restrictionsSplit[xEvaluate])
+            xEvaluate = parse_restriction(restrictionsSplit[xEvaluate])
+            parseRestrictions.append(xEvaluate)
 
         #Agregar variables de slack
         for xEvaluate in range(len(parseRestrictions)):
@@ -87,18 +99,14 @@ def parse_problem(objective, restrictions, maximize):
        
         #Matriz
         #Fila z
-        contS = 0
-        contA = 0
         for key in parseEquation:
             filaZ.append(parseEquation[key])
             #agrega las variables
             filaVar.append(key)
         for x in range(contRestriction+1):
             filaVar.append('s' + str(x+1))
-            contS+=1
         for y in range(contFalse):
             filaVar.append('a' + str(y+1))
-            contA+=1
 
         if contTrue > 0 and contFalse == 0:
             for x in range(contTrue):
@@ -112,27 +120,32 @@ def parse_problem(objective, restrictions, maximize):
                 elif maximize == "True" or maximize == "true":
                     filaZ.append(-Mvar)
 
-        #Matriz de valores
-        #cont = len(objective)
-        #for filas in parseRestrictions:
-            #for key, value in parseRestrictions.items():
-                #filaMat.append[value]
-            #for slack in range(len(objective), len(filaVar)):
-                #if slack == cont:
-                    #if contTrue:
-                        #filaMat.append[1.0]
-                    #else:
-                        #filaMat.append[-1.0]
-                        #filaMat.append[1.0]
-                        #slack += 1
-                    #break
-        #cont += 1
-              
         matrix.append(filaZ)
-        matrix.append(filaMat)
+
+        #Matriz de valores
+        cont = len(parseEquation)
+        for r in parseRestrictions:
+            #hace una matriz de 0's
+            row = np.zeros(len(filaVar) + 1, dtype=np.float64)
+            
+            for key, value in r[0].items():
+                var = splitIndex(key)[1]
+                row[var-1] = float(value)
+            for slack in range(len(parseEquation), len(filaVar)):
+                if slack == cont:
+                    if r[2] == True:
+                        row[slack] = 1.0
+                    else:
+                        row[slack] = -1.0
+                        row[slack+1] = 1.0
+                        slack += 1
+                    break
+            row[len(filaVar)] = r[1]
+            matrix.append(row)
+            cont += 1
         matrix.append(filaVar)
 
-        print(matrix)
+        #print(matrix)
         return matrix
 
 
