@@ -39,7 +39,7 @@ def parse_restriction(restriction):
                 upperBoundFlag = bool(0)
                 find = restriction.find(value)
 
-        separateEquation = restriction[1:find]
+        separateEquation = restriction[0:find]
         restrictionValue = restriction[find+3:len(restriction)]
         f = float(restrictionValue)
 
