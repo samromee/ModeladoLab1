@@ -1,3 +1,6 @@
+#Laboratorio1
+#Samantha Romero
+#Paula Monge
 from dataclasses import replace
 from turtle import up
 import numpy as np
